@@ -295,7 +295,7 @@ func chainFromMsg(msg netlink.Message) (*Chain, error) {
 			c.Policy = &policy
 		case unix.NFTA_CHAIN_HOOK:
 			ad.Do(func(b []byte) error {
-				c.Hooknum, c.Priority, err = hookFromMsg(b)
+				c.Hooknum, c.Priority, c.Device, err = hookFromMsg(b)
 				return err
 			})
 		}
@@ -304,16 +304,17 @@ func chainFromMsg(msg netlink.Message) (*Chain, error) {
 	return &c, nil
 }
 
-func hookFromMsg(b []byte) (*ChainHook, *ChainPriority, error) {
+func hookFromMsg(b []byte) (*ChainHook, *ChainPriority, string, error) {
 	ad, err := netlink.NewAttributeDecoder(b)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, "", err
 	}
 
 	ad.ByteOrder = binary.BigEndian
 
 	var hooknum ChainHook
 	var prio ChainPriority
+	var device string
 
 	for ad.Next() {
 		switch ad.Type() {
@@ -321,8 +322,10 @@ func hookFromMsg(b []byte) (*ChainHook, *ChainPriority, error) {
 			hooknum = ChainHook(ad.Uint32())
 		case unix.NFTA_HOOK_PRIORITY:
 			prio = ChainPriority(ad.Uint32())
+		case unix.NFTA_HOOK_DEV:
+			device = ad.String()
 		}
 	}
 
-	return &hooknum, &prio, nil
+	return &hooknum, &prio, device, nil
 }

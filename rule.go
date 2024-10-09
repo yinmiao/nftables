@@ -100,6 +100,9 @@ func (cc *Conn) GetRules(t *Table, c *Chain) ([]*Rule, error) {
 		if err != nil {
 			return nil, err
 		}
+		r.Chain.Device = c.Device
+		r.Chain.Hooknum = c.Hooknum
+		r.Chain.Priority = c.Priority
 		rules = append(rules, r)
 	}
 
